@@ -4,7 +4,7 @@ import {
   Product,
   ProductsResponse,
 } from '@products/interfaces/product.interface';
-import { Observable, tap } from 'rxjs';
+import { Observable, of, tap } from 'rxjs';
 import { environment } from 'src/environments/environment';
 
 const baseUrl = environment.baseUrl;
@@ -19,8 +19,15 @@ interface Options {
 export class ProductsService {
   private http = inject(HttpClient);
 
+  private productsCache = new Map<string, ProductsResponse>();
+  private productCacheBySlug = new Map<string, Product>();
   getProducts(options: Options): Observable<ProductsResponse> {
     const { limit = 9, offset = 0, gender = '' } = options;
+    const key = `${limit}-${offset}-${gender}`;
+    if (this.productsCache.has(key)) {
+      return of(this.productsCache.get(key)!);
+    }
+
     return this.http
       .get<ProductsResponse>(`${baseUrl}/products`, {
         params: {
@@ -29,11 +36,18 @@ export class ProductsService {
           gender: gender,
         },
       })
-      .pipe(tap((resp) => console.log(resp)));
+      .pipe(
+        tap((resp) => console.log(resp)),
+        tap((resp) => this.productsCache.set(key, resp))
+      );
   }
   getProductBySlug(slug: string): Observable<Product> {
-    return this.http
-      .get<Product>(`${baseUrl}/products/${slug}`)
-      .pipe(tap((resp) => console.log({ resp })));
+    if (this.productCacheBySlug.has(slug)) {
+      return of(this.productCacheBySlug.get(slug)!);
+    }
+    return this.http.get<Product>(`${baseUrl}/products/${slug}`).pipe(
+      tap((resp) => console.log({ resp })),
+      tap((resp) => this.productCacheBySlug.set(slug, resp))
+    );
   }
 }
