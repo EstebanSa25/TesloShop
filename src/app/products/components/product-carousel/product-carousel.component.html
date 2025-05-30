@@ -12,7 +12,18 @@
       />
     </div>
 
-    } ...
+    }
+    <!--  -->
+    @empty {
+    <div class="swiper-slide">
+      <img
+        class="w-full h-full object-cover"
+        [src]="null | productImage"
+        alt="No image available"
+      />
+      alt="image" />
+    </div>
+    }
   </div>
   <!-- If we need pagination -->
   <div class="swiper-pagination"></div>
