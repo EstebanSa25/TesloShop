@@ -1,4 +1,11 @@
-import { Component, inject, input, OnInit, signal } from '@angular/core';
+import {
+  Component,
+  computed,
+  inject,
+  input,
+  OnInit,
+  signal,
+} from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ProductCarouselComponent } from '@products/components/product-carousel/product-carousel.component';
 import { firstValueFrom } from 'rxjs';
@@ -24,7 +31,12 @@ export class ProductDetailsComponent implements OnInit {
 
   router = inject(Router);
   fb = inject(FormBuilder);
-
+  tempImages = signal<string[]>([]);
+  imagesToCarousel = computed<string[]>(() => [
+    ...this.product().images,
+    ...this.tempImages(),
+  ]);
+  imageFileList: FileList | undefined = undefined;
   productsService = inject(ProductsService);
   wasSaved = signal(false);
 
@@ -89,13 +101,17 @@ export class ProductDetailsComponent implements OnInit {
     if (this.product().id === 'new') {
       // Crear producto
       const product = await firstValueFrom(
-        this.productsService.createProduct(productLike)
+        this.productsService.createProduct(productLike, this.imageFileList)
       );
 
       this.router.navigate(['/admin/products', product.id]);
     } else {
       await firstValueFrom(
-        this.productsService.updateProduct(this.product().id, productLike)
+        this.productsService.updateProduct(
+          this.product().id,
+          productLike,
+          this.imageFileList
+        )
       );
     }
 
@@ -103,5 +119,16 @@ export class ProductDetailsComponent implements OnInit {
     setTimeout(() => {
       this.wasSaved.set(false);
     }, 3000);
+  }
+  onFilesChanged(event: Event) {
+    const fileList = (event.target as HTMLInputElement).files;
+    this.tempImages.set([]);
+    if (!fileList) return;
+    this.imageFileList = fileList;
+    const imageUrls = Array.from(fileList).map((file) =>
+      URL.createObjectURL(file)
+    );
+    this.product().images = imageUrls;
+    this.tempImages.set(imageUrls);
   }
 }

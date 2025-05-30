@@ -130,9 +130,25 @@
       </button>
     </div>
 
-    <product-carousel [images]="product().images" />
+    <product-carousel [images]="imagesToCarousel()" />
 
-    <input type="file" class="file-input file-input-bordered w-full mt-4" />
+    <input
+      type="file"
+      multiple
+      accept="image/*"
+      (change)="onFilesChanged($event)"
+      class="file-input file-input-bordered w-full mt-4"
+    />
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+      @for(image of tempImages(); track image) {
+      <img
+        [src]="image"
+        class="w-full object-cover rounded-xl mt-2"
+        alt="Temporal Image"
+      />
+
+      }
+    </div>
   </div>
   @if(wasSaved() ){
   <div class="alert alert-success fixed bottom-4 right-4 w-80 animate-fade-in">
